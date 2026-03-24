@@ -246,4 +246,7 @@ async function refresh() {
       : "Aucun sonomètre impacté.";
 }
 
-refresh();
+map.whenReady(() => {
+  refresh();
+});
+;

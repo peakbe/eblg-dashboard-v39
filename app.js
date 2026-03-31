@@ -247,7 +247,7 @@ function drawRunway(runway) {
             html: qfuText
         })
     }).addTo(runwayLayer);
-}
+
 
 function drawCorridor(runway) {
     if (!corridorLayer) return;

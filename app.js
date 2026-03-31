@@ -114,15 +114,13 @@ function drawRunway(runway) {
     if (runway === "UNKNOWN") return;
 
     const r = RUNWAYS[runway];
+    if (!r) return;
 
-    const line = L.polyline([r.start, r.end], {
+    L.polyline([r.start, r.end], {
         color: runway === "22" ? "red" : "blue",
         weight: 4
-    });
-
-    line.addTo(runwayLayer);
+    }).addTo(runwayLayer);
 }
-
 
 function drawCorridor(runway) {
     if (!corridorLayer) return;
@@ -132,6 +130,7 @@ function drawCorridor(runway) {
     if (runway === "UNKNOWN") return;
 
     const r = RUNWAYS[runway];
+    if (!r) return;
 
     const line = L.polyline([r.start, r.end], {
         color: "orange",
@@ -139,21 +138,22 @@ function drawCorridor(runway) {
         dashArray: "6,6"
     }).addTo(corridorLayer);
 
-    L.polylineDecorator(line, {
-        patterns: [
-            {
-                offset: "25%",
-                repeat: "50%",
-                symbol: L.Symbol.arrowHead({
-                    pixelSize: 12,
-                    polygon: false,
-                    pathOptions: { stroke: true, color: "orange" }
-                })
-            }
-        ]
-    }).addTo(corridorLayer);
+    if (L.polylineDecorator) {
+        L.polylineDecorator(line, {
+            patterns: [
+                {
+                    offset: "25%",
+                    repeat: "50%",
+                    symbol: L.Symbol.arrowHead({
+                        pixelSize: 12,
+                        polygon: false,
+                        pathOptions: { stroke: true, color: "orange" }
+                    })
+                }
+            ]
+        }).addTo(corridorLayer);
+    }
 }
-
 
 function getRunwayFromWind(windDir) {
     if (!windDir) return "UNKNOWN";
@@ -211,12 +211,16 @@ function getSonometerColor(runway) {
 
 function initSonometers(mapInstance) {
     SONOS.forEach(s => {
+
         const marker = L.circleMarker([s.lat, s.lon], {
             radius: 6,
             color: "gray",
             fillColor: "gray",
-            fillOpacity: 0.9
+            fillOpacity: 0.9,
+            weight: 1
         }).addTo(mapInstance);
+
+        marker.bindTooltip(s.id, { permanent: false });
 
         sonometers[s.id] = {
             ...s,
@@ -224,6 +228,8 @@ function initSonometers(mapInstance) {
             status: "UNKNOWN"
         };
     });
+
+    console.log("Sonomètres initialisés :", Object.keys(sonometers).length);
 }
 
 function updateSonometers(runway) {
@@ -290,49 +296,52 @@ async function loadMetar() {
     updateStatusPanel("METAR", data);
 }
 
+function getPhase(runway, windDir) {
+    if (!runway || !windDir) return "takeoff";
+
+    if (runway === "22") {
+        if (windDir >= 200 && windDir <= 260) return "landing";
+        return "takeoff";
+    }
+
+    if (runway === "04") {
+        if (windDir >= 20 && windDir <= 80) return "landing";
+        return "takeoff";
+    }
+
+    return "takeoff";
+}
+
 function updateMetarUI(data) {
     const el = document.getElementById("metar");
     if (!el) return;
 
-    // Si METAR indisponible
     if (!data || !data.raw) {
         el.innerText = "METAR indisponible";
         drawCorridor("UNKNOWN");
         updateRunwayPanel("UNKNOWN", null, null, null);
+        updateSonometersAdvanced("UNKNOWN", "takeoff");
+        updateSonometerPanel();
         return;
     }
 
-    // Affichage du METAR brut
     el.innerText = data.raw;
 
-    // Extraction vent
     const windDir = data.wind_direction?.value;
     const windSpeed = data.wind_speed?.value;
 
-    // Détermination de la piste
     const runway = getRunwayFromWind(windDir);
+    const phase = getPhase(runway, windDir);
 
-    // Détermination de la phase (décollage / atterrissage)
-    let phase = "takeoff";
-
-    if (runway === "22") {
-        if (windDir >= 200 && windDir <= 260) phase = "landing";
-    }
-
-    if (runway === "04") {
-        if (windDir >= 20 && windDir <= 80) phase = "landing";
-    }
-
-    // Mise à jour sonomètres
     updateSonometersAdvanced(runway, phase);
+    updateSonometerPanel();
 
-    // Mise à jour piste active (panneau)
     updateRunwayPanel(runway, windDir, windSpeed, phase);
 
-    // Mise à jour visuelle carte
     drawRunway(runway);
     drawCorridor(runway);
 }
+
 
 // ======================================================
 // TAF

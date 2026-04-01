@@ -1,6 +1,14 @@
-/**
- * Initialise les interactions UI (sidebar + sono toggle).
- */
+// ======================================================
+// UI MODULE
+// ======================================================
+
+// Imports nécessaires
+import { heatLayer, clusterLayer, playHeatmapHistory } from "./sonometers.js";
+
+
+// ------------------------------------------------------
+// 1) UI de base (sidebar + panneau sono)
+// ------------------------------------------------------
 export function initUI() {
     const sonoHeader = document.getElementById("sono-header");
     const sonoPanel = document.getElementById("sono-panel");
@@ -22,8 +30,12 @@ export function initUI() {
         };
     }
 }
-import { heatLayer } from "./sonometers.js";
 
+
+
+// ------------------------------------------------------
+// 2) Bouton ON/OFF Heatmap
+// ------------------------------------------------------
 export function initHeatmapToggle(map) {
     const btn = document.getElementById("toggle-heatmap");
     if (!btn) return;
@@ -38,6 +50,12 @@ export function initHeatmapToggle(map) {
         }
     };
 }
+
+
+
+// ------------------------------------------------------
+// 3) Bouton ON/OFF Clusters
+// ------------------------------------------------------
 export function initClusterToggle(map) {
     const btn = document.getElementById("toggle-clusters");
     if (!btn) return;
@@ -51,13 +69,24 @@ export function initClusterToggle(map) {
     };
 }
 
+
+
+// ------------------------------------------------------
+// 4) Mode Heatmap Historique
+// ------------------------------------------------------
 export function initHeatmapHistory(map) {
     const btn = document.getElementById("play-history");
     if (!btn) return;
 
     btn.onclick = () => playHeatmapHistory(map);
 }
-export function initDebugPanel() {
+
+
+
+// ------------------------------------------------------
+// 5) Panneau Debug (FPS + CPU + Render Time)
+// ------------------------------------------------------
+export function initDebugPanel(map) {
     const fpsEl = document.getElementById("fps");
     const cpuEl = document.getElementById("cpu");
     const renderEl = document.getElementById("render");
@@ -83,7 +112,6 @@ export function initDebugPanel() {
 
     loop();
 
-    // Temps de rendu Leaflet
     map.on("layeradd layerremove moveend zoomend", () => {
         const t0 = performance.now();
         requestAnimationFrame(() => {

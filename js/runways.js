@@ -124,3 +124,29 @@ export function drawCorridor(runway, layer) {
         }).addTo(layer);
     }
 }
+/**
+ * Détermine la piste active en fonction du vent.
+ * @param {number} windDir
+ * @returns {string}
+ */
+export function getRunwayFromWind(windDir) {
+    if (!windDir) return "UNKNOWN";
+    const diff22 = Math.abs(windDir - 220);
+    const diff04 = Math.abs(windDir - 40);
+    return diff22 < diff04 ? "22" : "04";
+}
+
+/**
+ * Calcule le crosswind.
+ * @returns {{crosswind:number, angleDiff:number}}
+ */
+export function computeCrosswind(windDir, windSpeed, runwayHeading) {
+    if (!windDir || !windSpeed || !runwayHeading)
+        return { crosswind: 0, angleDiff: 0 };
+
+    const angleDiff = Math.abs(windDir - runwayHeading);
+    const rad = angleDiff * Math.PI / 180;
+    const crosswind = Math.round(Math.abs(windSpeed * Math.sin(rad)));
+
+    return { crosswind, angleDiff };
+}
